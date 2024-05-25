@@ -77,6 +77,7 @@ def create_app():
 
         # Рассчитываем количество дней с момента открытия вклада до текущего момента
         today = datetime.now()
+
         for deposit in deposits:
             days_since_start = (today - deposit.start_date).days
             deposit.interest = calculate_interest(deposit, days_since_start, period)
@@ -129,6 +130,7 @@ def create_app():
         total_interest = amount_with_interest - deposit.amount
 
         return total_interest
+
 
     def calculate_tax(deposits, tax_rate):
         total_tax = 0
