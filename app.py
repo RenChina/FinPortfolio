@@ -5,6 +5,7 @@ from wtforms import StringField, PasswordField, SubmitField, DecimalField, Integ
 from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, Portfolio, Deposit
+from wtforms import DecimalField
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
