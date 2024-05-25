@@ -112,7 +112,7 @@ def create_app():
         for deposit in deposits:
             end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
             if end_date.year == date.today().year:
-                interest = (deposit.amount * deposit.interest_rate * deposit.duration_months) / 100
+                interest = (deposit.amount * deposit.interest_rate * (deposit.duration_months * 30.44)) / 100
                 total_tax += interest * tax_rate
         return total_tax
 
