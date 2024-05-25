@@ -107,14 +107,21 @@ def create_app():
         flash('Вы покинули профиль', 'success')
         return redirect(url_for('index'))
 
+    def calculate_interest(deposit):
+        # Преобразуем процентную ставку в долю (например, 5% -> 0.05)
+        rate = deposit.interest_rate / 100
 
+        # Рассчитываем проценты по формуле сложного процента
+        total_interest = deposit.amount * (1 + rate) ** deposit.duration_months - deposit.amount
+
+        return total_interest
     def calculate_tax(deposits, tax_rate):
         total_tax = 0
         for deposit in deposits:
-            end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
-            if end_date.year == date.today().year:
-                interest = deposit.amount * (deposit.interest_rate / 100) * (deposit.duration_months / 12)
-                total_tax += interest * tax_rate
+            # Пример расчета налога
+            interest_income = calculate_interest(deposit)
+            tax = interest_income * tax_rate
+            total_tax += tax
         return total_tax
 
     return app
