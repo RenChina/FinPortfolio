@@ -5,7 +5,6 @@ from wtforms import StringField, PasswordField, SubmitField, DecimalField, Integ
 from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, Portfolio, Deposit
-from wtforms import DecimalField
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
@@ -34,7 +33,6 @@ def create_app():
         duration_months = IntegerField('Продолжительность(месяц)', validators=[DataRequired()])
         start_date = DateField('Начало ставки', format='%Y-%m-%d', validators=[DataRequired()])
         submit = SubmitField('Принять')
-        abs = DecimalField
 
     @app.route('/')
     def index():
@@ -70,7 +68,7 @@ def create_app():
         user = User.query.get_or_404(user_id)
         portfolios = Portfolio.query.filter_by(user_id=user.id).all()
         deposits = Deposit.query.filter_by(user_id=user.id).all()
-        tax_rate = 0.2  # Пример налоговой ставки
+        tax_rate = 0.13  # Пример налоговой ставки
         tax = calculate_tax(deposits, tax_rate)
         return render_template('profile.html', user=user, portfolios=portfolios, deposits=deposits, tax_rate=tax_rate, tax=tax)
 
@@ -108,21 +106,14 @@ def create_app():
         flash('Вы покинули профиль', 'success')
         return redirect(url_for('index'))
 
-    def calculate_interest(deposit):
-        # Преобразуем процентную ставку в долю (например, 5% -> 0.05)
-        rate = deposit.interest_rate / 100
 
-        # Рассчитываем проценты по формуле сложного процента
-        total_interest = deposit.amount * (1 + rate) ** deposit.duration_months - deposit.amount
-
-        return total_interest
     def calculate_tax(deposits, tax_rate):
         total_tax = 0
         for deposit in deposits:
-            # Пример расчета налога
-            interest_income = calculate_interest(deposit)
-            tax = interest_income * tax_rate
-            total_tax += tax
+            end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
+            if end_date.year == date.today().year:
+                interest = deposit.amount * (deposit.interest_rate / 100) * deposit.duration_months
+                total_tax += interest * tax_rate
         return total_tax
 
     return app
