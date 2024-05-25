@@ -5,7 +5,6 @@ from wtforms import StringField, PasswordField, SubmitField, DecimalField, Integ
 from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, Portfolio, Deposit
-from datetime import datetime, timedelta
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
@@ -71,19 +70,7 @@ def create_app():
         deposits = Deposit.query.filter_by(user_id=user.id).all()
         tax_rate = 0.13  # Пример налоговой ставки
         tax = calculate_tax(deposits, tax_rate)
-
-        # Предположим, что период начисления процентов составляет 1 год (365 дней)
-        period = 1
-
-        # Рассчитываем количество дней с момента открытия вклада до текущего момента
-        today = datetime.now()
-
-        for deposit in deposits:
-            days_since_start = (today - deposit.start_date).days
-            deposit.interest = calculate_interest(deposit, days_since_start, period)
-
-        return render_template('profile.html', user=user, portfolios=portfolios, deposits=deposits, tax_rate=tax_rate,
-                               tax=tax)
+        return render_template('profile.html', user=user, portfolios=portfolios, deposits=deposits, tax_rate=tax_rate, tax=tax)
 
     @app.route('/deposit', methods=['GET', 'POST'])
     def deposit():
@@ -119,26 +106,14 @@ def create_app():
         flash('Вы покинули профиль', 'success')
         return redirect(url_for('index'))
 
-    def calculate_interest(deposit, days, period):
-        # Преобразуем процентную ставку в долю (например, 5% -> 0.05)
-        rate = deposit.interest_rate / 100
-
-        # Рассчитываем проценты по формуле сложного процента с учетом дней и периода начисления процентов
-        amount_with_interest = deposit.amount * (1 + (rate * days) / (100 * 365)) ** period
-
-        # Рассчитываем проценты как разницу между суммой с процентами и изначальной суммой вклада
-        total_interest = amount_with_interest - deposit.amount
-
-        return total_interest
-
 
     def calculate_tax(deposits, tax_rate):
         total_tax = 0
         for deposit in deposits:
-            # Пример расчета налога
-            interest_income = calculate_interest(deposit)
-            tax = interest_income * tax_rate
-            total_tax += tax
+            end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
+            if end_date.year == date.today().year:
+                interest = (deposit.amount * deposit.interest_rate * deposit.duration_months) / 100
+                total_tax += interest * tax_rate
         return total_tax
 
     return app
