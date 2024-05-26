@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DecimalField, IntegerField, DateField
 from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, Portfolio, Deposit
+from models import User, Portfolio, Deposit, FamilyDeposit
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
@@ -34,6 +34,10 @@ def create_app():
         start_date = DateField('Начало ставки', format='%Y-%m-%d', validators=[DataRequired()])
         submit = SubmitField('Принять')
 
+    class FamilyDepositForm(FlaskForm):
+        email = StringField('Почта пользователя', validators=[DataRequired(), Email()])
+        submit = SubmitField('Добавить')
+
     @app.route('/')
     def index():
         return render_template('index.html')
@@ -45,10 +49,10 @@ def create_app():
             user = User.query.filter_by(email=form.email.data).first()
             if user and check_password_hash(user.password, form.password.data):
                 session['user_id'] = user.id
-                flash('Успешно зарегались', 'success')
+                flash('Успешно зарегистрировались', 'success')
                 return redirect(url_for('profile', user_id=user.id))
             else:
-                flash('Не найдена почта или пароль.', 'danger')
+                flash('Неправильная почта или пароль.', 'danger')
         return render_template('login.html', form=form)
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -59,7 +63,7 @@ def create_app():
             new_user = User(email=form.email.data, password=hashed_password)
             db.session.add(new_user)
             db.session.commit()
-            flash('Регистрация успешна!!', 'success')
+            flash('Регистрация успешна!', 'success')
             return redirect(url_for('login'))
         return render_template('register.html', form=form)
 
@@ -68,9 +72,15 @@ def create_app():
         user = User.query.get_or_404(user_id)
         portfolios = Portfolio.query.filter_by(user_id=user.id).all()
         deposits = Deposit.query.filter_by(user_id=user.id).all()
+        family_deposits = FamilyDeposit.query.filter_by(owner_id=user.id).all()
         tax_rate = 0.13  # Пример налоговой ставки
         tax = calculate_tax(deposits, tax_rate)
-        return render_template('profile.html', user=user, portfolios=portfolios, deposits=deposits, tax_rate=tax_rate, tax=tax)
+        family_deposits_data = []
+        for family_deposit in family_deposits:
+            member = User.query.get(family_deposit.member_id)
+            member_deposits = Deposit.query.filter_by(user_id=member.id).all()
+            family_deposits_data.append({'member': member, 'deposits': member_deposits})
+        return render_template('profile.html', user=user, portfolios=portfolios, deposits=deposits, family_deposits=family_deposits_data, tax_rate=tax_rate, tax=tax)
 
     @app.route('/deposit', methods=['GET', 'POST'])
     def deposit():
@@ -85,7 +95,7 @@ def create_app():
             )
             db.session.add(new_deposit)
             db.session.commit()
-            flash('Депозит добавлен!!', 'success')
+            flash('Депозит добавлен!', 'success')
             return redirect(url_for('profile', user_id=session['user_id']))
         return render_template('deposit.html', form=form)
 
@@ -93,17 +103,35 @@ def create_app():
     def close_deposit(deposit_id):
         deposit = Deposit.query.get_or_404(deposit_id)
         if deposit.user_id != session.get('user_id'):
-            flash('Не найдено вкладов', 'danger')
+            flash('Нет доступа к вкладу', 'danger')
             return redirect(url_for('profile', user_id=session['user_id']))
         db.session.delete(deposit)
         db.session.commit()
         flash('Депозит закрыт', 'success')
         return redirect(url_for('profile', user_id=session['user_id']))
 
+    @app.route('/add_family_deposit', methods=['GET', 'POST'])
+    def add_family_deposit():
+        form = FamilyDepositForm()
+        if form.validate_on_submit():
+            member = User.query.filter_by(email=form.email.data).first()
+            if member:
+                new_family_deposit = FamilyDeposit(
+                    owner_id=session['user_id'],
+                    member_id=member.id
+                )
+                db.session.add(new_family_deposit)
+                db.session.commit()
+                flash('Семейный вклад добавлен!', 'success')
+                return redirect(url_for('profile', user_id=session['user_id']))
+            else:
+                flash('Пользователь не найден', 'danger')
+        return render_template('add_family_deposit.html', form=form)
+
     @app.route('/logout')
     def logout():
         session.pop('user_id', None)
-        flash('Вы покинули профиль', 'success')
+        flash('Вы вышли из профиля', 'success')
         return redirect(url_for('index'))
 
     def calculate_tax(deposits, tax_rate):
