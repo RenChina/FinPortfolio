@@ -79,8 +79,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for family_deposit in family_deposits %}
-                        {% for deposit in family_deposit.deposits %}
+                    {% for family_deposit in user.family_deposits %}
+                        {% for deposit in family_deposit.member.deposits %}
                         <tr>
                             <td>{{ family_deposit.member.email }}</td>
                             <td>{{ deposit.amount }}</td>

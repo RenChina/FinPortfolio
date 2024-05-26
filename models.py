@@ -6,7 +6,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     deposits = db.relationship('Deposit', backref='user', lazy=True)
-    family_deposits = db.relationship('FamilyDeposit', backref='owner', lazy=True)
+    family_deposits = db.relationship('FamilyDeposit', foreign_keys='FamilyDeposit.owner_id', backref='owner', lazy=True)
+    family_memberships = db.relationship('FamilyDeposit', foreign_keys='FamilyDeposit.member_id', backref='member', lazy=True)
 
 class Portfolio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -27,4 +28,3 @@ class FamilyDeposit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     member_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', foreign_keys=[member_id])
