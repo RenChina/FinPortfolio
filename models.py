@@ -1,11 +1,11 @@
 from extensions import db
+from datetime import datetime
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    portfolios = db.relationship('Portfolio', backref='owner', lazy=True)
-    deposits = db.relationship('Deposit', backref='owner', lazy=True)
+    deposits = db.relationship('Deposit', backref='user', lazy=True)
 
 class Portfolio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -16,8 +16,8 @@ class Portfolio(db.Model):
 
 class Deposit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Float, nullable=False)
-    interest_rate = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    interest_rate = db.Column(db.Numeric(5, 2), nullable=False)
     duration_months = db.Column(db.Integer, nullable=False)
-    start_date = db.Column(db.Date, nullable=False)
+    start_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
