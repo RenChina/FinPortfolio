@@ -1,11 +1,13 @@
 from extensions import db
+from datetime import datetime
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    portfolios = db.relationship('Portfolio', backref='owner', lazy=True)
-    deposits = db.relationship('Deposit', backref='owner', lazy=True)
+    deposits = db.relationship('Deposit', backref='user', lazy=True)
+    family_deposits = db.relationship('FamilyDeposit', foreign_keys='FamilyDeposit.owner_id', backref='owner', lazy=True)
+    family_memberships = db.relationship('FamilyDeposit', foreign_keys='FamilyDeposit.member_id', backref='member', lazy=True)
 
 class Portfolio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -16,8 +18,24 @@ class Portfolio(db.Model):
 
 class Deposit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Float, nullable=False)
-    interest_rate = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    interest_rate = db.Column(db.Numeric(5, 2), nullable=False)
+    duration_months = db.Column(db.Integer, nullable=False)
+    start_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class FamilyDeposit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    member_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class ClosedDeposit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Numeric, nullable=False)
+    interest_rate = db.Column(db.Numeric, nullable=False)
     duration_months = db.Column(db.Integer, nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<ClosedDeposit {self.id}>'

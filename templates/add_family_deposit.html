@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Family Deposit</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Добавление семейного вклада</h1>
+        <form method="POST" action="{{ url_for('add_family_deposit') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                <label for="email">{{ form.email.label }}</label>
+                {{ form.email(class="form-control") }}
+            </div>
+            <button type="submit" class="btn btn-primary">{{ form.submit() }}</button>
+        </form>
+    </div>
+</body>
+</html>
