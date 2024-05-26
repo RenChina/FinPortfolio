@@ -106,13 +106,15 @@ def create_app():
         flash('Вы покинули профиль', 'success')
         return redirect(url_for('index'))
 
-
     def calculate_tax(deposits, tax_rate):
         total_tax = 0
         for deposit in deposits:
+            # Вычисление количества дней вклада
             end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
             if end_date.year == date.today().year:
-                interest = (deposit.amount * deposit.interest_rate * (deposit.duration_months * 30.44)) / 100
+                days_of_deposit = (end_date - deposit.start_date).days
+                # Рассчитать налог с использованием формулы S = (P * I * T/K)/100
+                interest = (deposit.amount * deposit.interest_rate * days_of_deposit) / (365 * 100)
                 total_tax += interest * tax_rate
         return total_tax
 
