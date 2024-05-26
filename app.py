@@ -5,6 +5,7 @@ from wtforms import StringField, PasswordField, SubmitField, DecimalField, Integ
 from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, Portfolio, Deposit, FamilyDeposit
+from decimal import Decimal
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
@@ -135,15 +136,11 @@ def create_app():
         return redirect(url_for('index'))
 
     def calculate_tax(deposits, tax_rate):
-        total_tax = 0
+        total_tax = Decimal('0.00')
+        tax_rate = Decimal(tax_rate)  # Преобразование tax_rate в Decimal
         for deposit in deposits:
-            # Вычисление количества дней вклада
-            end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
-            if end_date.year == date.today().year:
-                days_of_deposit = (end_date - deposit.start_date).days
-                # Рассчитать налог с использованием формулы S = (P * I * T/K)/100
-                interest = (deposit.amount * deposit.interest_rate * days_of_deposit) / (365 * 100)
-                total_tax += interest * tax_rate
+            interest = deposit.amount * (deposit.interest_rate / 100) * (deposit.duration_months / 12)
+            total_tax += interest * tax_rate
         return total_tax
 
     return app

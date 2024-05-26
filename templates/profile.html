@@ -12,6 +12,7 @@
         <div class="header">
             <h1>Профиль пользователя</h1>
             <h2>{{ user.email }}</h2>
+            <a href="{{ url_for('logout') }}" class="logout-button">Выйти</a>
         </div>
 
         <div class="table-container">
