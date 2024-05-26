@@ -28,3 +28,14 @@ class FamilyDeposit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     member_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+class ClosedDeposit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Numeric, nullable=False)
+    interest_rate = db.Column(db.Numeric, nullable=False)
+    duration_months = db.Column(db.Integer, nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f'<ClosedDeposit {self.id}>'

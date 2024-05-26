@@ -9,6 +9,7 @@
 </head>
 <body>
     <div class="container">
+
         <div class="header">
             <h1>Профиль пользователя</h1>
             <h2>{{ user.email }}</h2>
@@ -16,21 +17,29 @@
         </div>
 
         <div class="table-container">
-            <h3>Портфель активов</h3>
+            <h3>Вклады</h3>
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Название актива</th>
                         <th>Количество</th>
-                        <th>Стоимость</th>
+                        <th>Процентная ставка</th>
+                        <th>Продолжительность (месяцы)</th>
+                        <th>Начало ставки</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for asset in portfolios %}
+                    {% for deposit in deposits %}
                     <tr>
-                        <td>{{ asset.asset_name }}</td>
-                        <td>{{ asset.quantity }}</td>
-                        <td>{{ asset.value }}</td>
+                        <td>{{ deposit.amount }}</td>
+                        <td>{{ deposit.interest_rate }}</td>
+                        <td>{{ deposit.duration_months }}</td>
+                        <td>{{ deposit.start_date }}</td>
+                        <td>
+                            <form action="{{ url_for('close_deposit', deposit_id=deposit.id) }}" method="post">
+                                <button type="submit" class="btn btn-primary">Закрыть депозит</button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -38,27 +47,27 @@
         </div>
 
         <div class="table-container">
-            <h3>Вклады</h3>
+            <h3>Закрытые вклады</h3>
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Сумма</th>
+                        <th>Количество</th>
                         <th>Процентная ставка</th>
                         <th>Продолжительность (месяцы)</th>
-                        <th>Дата начала</th>
-                        <th>Действие</th>
+                        <th>Начало ставки</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for deposit in deposits %}
+                    {% for closed_deposit in closed_deposits %}
                     <tr>
-                        <td>{{ deposit.amount }}</td>
-                        <td>{{ deposit.interest_rate }}%</td>
-                        <td>{{ deposit.duration_months }}</td>
-                        <td>{{ deposit.start_date }}</td>
+                        <td>{{ closed_deposit.amount }}</td>
+                        <td>{{ closed_deposit.interest_rate }}</td>
+                        <td>{{ closed_deposit.duration_months }}</td>
+                        <td>{{ closed_deposit.start_date }}</td>
                         <td>
-                            <form action="{{ url_for('close_deposit', deposit_id=deposit.id) }}" method="POST">
-                                <input type="submit" value="Закрыть" class="btn btn-danger">
+                            <form action="{{ url_for('delete_closed_deposit', deposit_id=closed_deposit.id) }}" method="post">
+                                <button type="submit" class="btn btn-danger">Удалить</button>
                             </form>
                         </td>
                     </tr>
@@ -69,33 +78,35 @@
 
         <div class="table-container">
             <h3>Семейные вклады</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Email участника</th>
-                        <th>Сумма вклада</th>
-                        <th>Процентная ставка</th>
-                        <th>Продолжительность (месяцы)</th>
-                        <th>Дата начала</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for family_deposit in user.family_deposits %}
-                        {% for deposit in family_deposit.member.deposits %}
+            {% for family_deposit in family_deposits %}
+                <h4>Участник: {{ family_deposit.member.email }}</h4>
+                <form action="{{ url_for('delete_family_deposit', family_deposit_id=family_deposit.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger">Удалить семейный вклад</button>
+                </form>
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td>{{ family_deposit.member.email }}</td>
+                            <th>Количество</th>
+                            <th>Процентная ставка</th>
+                            <th>Продолжительность (месяцы)</th>
+                            <th>Начало ставки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deposit in family_deposit.deposits %}
+                        <tr>
                             <td>{{ deposit.amount }}</td>
-                            <td>{{ deposit.interest_rate }}%</td>
+                            <td>{{ deposit.interest_rate }}</td>
                             <td>{{ deposit.duration_months }}</td>
                             <td>{{ deposit.start_date }}</td>
                         </tr>
                         {% endfor %}
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            {% endfor %}
         </div>
 
-        <div class="table-container">
+       <div class="table-container">
             <h3>Налоговая информация</h3>
             <table class="table">
                 <tbody>
@@ -117,8 +128,9 @@
         </div>
 
         <div class="footer">
-            <p>&copy; 2024 ООО Большой хуй</p>
+            <p>&copy; 2024 ООО Биг болт</p>
         </div>
+
     </div>
 </body>
 </html>

@@ -10,10 +10,30 @@
   </head>
   <body>
     <div class="container">
-      <h1>Добро пожаловать!</h1>
-      <div class="link-container">
-        <a href="{{ url_for('login') }}">Войти</a>
-        <a href="{{ url_for('register') }}">Регистрация</a>
+      <div class="row align-items-center g-lg-5 py-5">
+        <div class="col-lg-7 text-center text-lg-start">
+          <h1 class="display-4 fw-bold lh-1 text-body-emphasis mb-3">Добро пожаловать на наш сайт!</h1>
+          <p class="col-lg-10 fs-4">Представьте, вы попали в инфоповод, вы, ваша семья - главная цель ВКЛАДЫ. Вы вкладываете - мы вычисляем.</p>
+        </div>
+        <div class="col-md-10 mx-auto col-lg-5">
+          <form method="POST" action="{{ url_for('login') }}" class="p-4 p-md-5 border rounded-3 bg-body-tertiary">
+            {{ form.hidden_tag() }}
+            <div class="form-floating mb-3">
+              {{ form.email(class_="form-control", id="floatingInput", placeholder="name@example.com") }}
+              <label for="floatingInput">Email address</label>
+            </div>
+            <div class="form-floating mb-3">
+              {{ form.password(class_="form-control", id="floatingPassword", placeholder="Password") }}
+              <label for="floatingPassword">Password</label>
+            </div>
+            <button class="w-100 btn btn-lg btn-primary" type="submit">Войти</button>
+            <hr class="my-4">
+            <small class="text-body-secondary">Кликните для продолжения или пройдите регистрацию ниже</small>
+            <div class="text-center">
+              <a href="{{ url_for('register') }}" class="w-100 btn btn-lg btn-secondary mt-3">Зарегистрироваться</a>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </body>
