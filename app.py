@@ -62,69 +62,72 @@ def create_app():
     def register():
         form = RegistrationForm()
         if form.validate_on_submit():
+            # Проверяем, существует ли пользователь с таким email
+            existing_user = User.query.filter_by(email=form.email.data).first()
+            if existing_user:
+                flash('Пользователь с такой почтой уже зарегистрирован.', 'danger')
+                return redirect(url_for('register'))
+
+            # Хешируем пароль и создаем нового пользователя
             hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256')
             new_user = User(email=form.email.data, password=hashed_password)
             db.session.add(new_user)
-            db.session.commit()
-            flash('Регистрация успешна!', 'success')
-            return redirect(url_for('login'))
+
+            try:
+                db.session.commit()
+                flash('Регистрация успешна!', 'success')
+                return redirect(url_for('index'))
+            except :
+                db.session.rollback()
+                flash('Ошибка при регистрации, попробуйте снова.', 'danger')
+
         return render_template('register.html', form=form)
 
-    @app.route('/profile/<int:user_id>')
+    @app.route('/profile/<int:user_id>', methods=['GET'])
     def profile(user_id):
-
         user = User.query.get_or_404(user_id)
-
         if not user:
             flash('Пользователь не найден', 'danger')
             return redirect(url_for('index'))
 
-        portfolios = Portfolio.query.filter_by(user_id=user.id).all()
-
         deposits = Deposit.query.filter_by(user_id=user.id).all()
-
-        closed_deposits = ClosedDeposit.query.filter_by(user_id=user.id).all()  # Новый запрос для закрытых вкладов
-
+        closed_deposits = ClosedDeposit.query.filter_by(user_id=user.id).all()
         family_deposits = FamilyDeposit.query.filter_by(owner_id=user.id).all()
 
-        tax_rate = 0.13  # Пример налоговой ставки
-
+        tax_rate = 0.13
         tax = calculate_tax(deposits, tax_rate)
 
         family_deposits_data = []
-
         for family_deposit in family_deposits:
             member = User.query.get(family_deposit.member_id)
             member_deposits = Deposit.query.filter_by(user_id=member.id).all()
             family_deposits_data.append({
-                'id': family_deposit.id,  # Add id field here
+                'id': family_deposit.id,
                 'member': member,
                 'deposits': member_deposits
             })
 
-        return render_template('profile.html', user=user, portfolios=portfolios, deposits=deposits,
-                               closed_deposits=closed_deposits, family_deposits=family_deposits_data, tax_rate=tax_rate,
+        if request.args.get('section') == 'closed_deposits':
+            return render_template('partials/closed_deposits.html', closed_deposits=closed_deposits)
+
+        return render_template('profile.html', user=user, deposits=deposits,
+                               closed_deposits=closed_deposits, family_deposits_data=family_deposits_data,
+                               tax_rate=tax_rate,
                                tax=tax)
+
     @app.route('/delete_closed_deposit/<int:deposit_id>', methods=['POST'])
     def delete_closed_deposit(deposit_id):
-
         closed_deposit = ClosedDeposit.query.get_or_404(deposit_id)
-
         if closed_deposit.user_id != session.get('user_id'):
-            flash('Нет доступа к вкладу', 'danger')
-            return redirect(url_for('profile', user_id=session['user_id']))
+            return {'error': 'Нет доступа к вкладу'}, 403
 
         db.session.delete(closed_deposit)
-
         db.session.commit()
-        flash('Закрытый вклад удален', 'success')
-
-        return redirect(url_for('profile', user_id=session['user_id']))
+        return {'success': True}, 200
 
     @app.route('/deposit', methods=['GET', 'POST'])
     def deposit():
         form = DepositForm()
-
         if form.validate_on_submit():
             new_deposit = Deposit(
                 amount=form.amount.data,
@@ -143,7 +146,6 @@ def create_app():
     @app.route('/close_deposit/<int:deposit_id>', methods=['POST'])
     def close_deposit(deposit_id):
         deposit = Deposit.query.get_or_404(deposit_id)
-
         if deposit.user_id != session.get('user_id'):
             flash('Нет доступа к вкладу', 'danger')
             return redirect(url_for('profile', user_id=session['user_id']))
@@ -161,7 +163,6 @@ def create_app():
         db.session.commit()
 
         flash('Депозит закрыт', 'success')
-
         return redirect(url_for('profile', user_id=session['user_id']))
 
     @app.route('/add_family_deposit', methods=['GET', 'POST'])
@@ -193,7 +194,6 @@ def create_app():
         flash('Семейный вклад удален', 'success')
         return redirect(url_for('profile', user_id=session['user_id']))
 
-
     @app.route('/logout')
     def logout():
         session.pop('user_id', None)
@@ -205,8 +205,7 @@ def create_app():
         for deposit in deposits:
             end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
             if end_date.year == date.today().year:
-                interest = (deposit.amount * deposit.interest_rate * (
-                            Decimal(deposit.duration_months) * Decimal('30.44'))) / Decimal('100')
+                interest = (deposit.amount * deposit.interest_rate * (Decimal(deposit.duration_months) * Decimal('30.44'))) / Decimal('100')
                 total_tax += interest * Decimal(tax_rate)
         return total_tax
 

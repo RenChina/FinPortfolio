@@ -1,91 +1,276 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Profile</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный профиль</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #121212; /* Темный цвет фона */
+            color: #ffffff; /* Светлый цвет текста */
+        }
+        .container-fluid {
+            flex: 1;
+            display: flex;
+        }
+        .sidebar {
+            height: 100vh;
+            background-color: #1c1c1c; /* Темный цвет фона для сайдбара */
+            padding-top: 20px;
+        }
+        .nav-link {
+            color: #cccccc; /* Светлый цвет для ссылок */
+        }
+        .nav-link.active {
+            font-weight: bold;
+            color: #ffc107; /* Яркий цвет для активных ссылок */
+        }
+        .content-section {
+            display: none;
+            background-color: #2c2c2c; /* Темный цвет фона для контента */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: -13px 13px 10px rgb(39 39 39);
+            margin: 20px;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .table {
+            color: #ffffff; /* Цвет текста таблицы */
+        }
+        .table th, .table td {
+            vertical-align: middle;
+            background-color: #424242; /* Темный цвет фона для ячеек таблицы */
+        }
+        .btn-primary {
+            background-color: #ffc107;
+            border: none;
+            color: #212121;
+        }
+        .btn-primary:hover {
+            background-color: #ffca28;
+        }
+        .btn-danger {
+            background-color: #e57373;
+            border: none;
+            color: #212121;
+        }
+        .btn-danger:hover {
+            background-color: #ef5350;
+        }
+        footer {
+            background-color: #1c1c1c;
+            padding: 1rem;
+            text-align: center;
+            color: #cccccc;
+        }
+    </style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Обработчик событий для кнопок удаления закрытых вкладов
+        $('body').on('click', '.delete-closed-deposit-btn', function() {
+            const depositId = $(this).data('id');
+            $.ajax({
+                type: 'POST',
+                url: `/delete_closed_deposit/${depositId}`,
+                success: function(response) {
+                    if (response.success) {
+                        refreshSection('closed_deposits');
+                    } else {
+                        alert('Ошибка при удалении вклада');
+                    }
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+
+        // Обработчик событий для кнопок удаления семейных вкладов
+        $('body').on('click', '.delete-family-deposit-btn', function() {
+            const depositId = $(this).data('id');
+            $.ajax({
+                type: 'POST',
+                url: `/delete_family_deposit/${depositId}`,
+                success: function(response) {
+                    if (response.success) {
+                        refreshSection('family_deposits');
+                    } else {
+                        alert('Ошибка при удалении семейного вклада');
+                    }
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+
+        function refreshSection(section) {
+            $.ajax({
+                url: `/profile/{{ user.id }}?section=${section}`,
+                type: 'GET',
+                success: function(response) {
+                    $(`#${section}`).html($(response).find(`#${section}`).html());
+                },
+                error: function(error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        let links = document.querySelectorAll('.nav-link');
+        let sections = document.querySelectorAll('.content-section');
+
+        links.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                sections.forEach(section => section.classList.remove('active'));
+                links.forEach(link => link.classList.remove('active'));
+                document.querySelector(link.getAttribute('href')).classList.add('active');
+                link.classList.add('active');
+                history.pushState(null, '', link.getAttribute('href'));
+            });
+        });
+
+        window.addEventListener('popstate', function() {
+            const activeSection = location.hash || '#profile-overview';
+            links.forEach(link => {
+                if (link.getAttribute('href') === activeSection) {
+                    link.click();
+                }
+            });
+        });
+
+        const activeSection = location.hash || '#profile-overview';
+        links.forEach(link => {
+            if (link.getAttribute('href') === activeSection) {
+                link.click();
+            }
+        });
+    });
+</script>
+
+
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid">
+        <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#profile-overview">Обзор профиля</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#deposits">Вклады</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#closed-deposits">Закрытые вклады</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#family-deposits">Семейные вклады</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#tax-info">Налоговая информация</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
 
-        <div class="header">
-            <h1>Профиль пользователя</h1>
-            <h2>{{ user.email }}</h2>
-            <a href="{{ url_for('logout') }}" class="logout-button">Выйти</a>
-        </div>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Профиль пользователя</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-secondary">Выйти</a>
+                    </div>
+                </div>
+            </div>
 
-        <div class="table-container">
-            <h3>Вклады</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Количество</th>
-                        <th>Процентная ставка</th>
-                        <th>Продолжительность (месяцы)</th>
-                        <th>Начало ставки</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for deposit in deposits %}
-                    <tr>
-                        <td>{{ deposit.amount }}</td>
-                        <td>{{ deposit.interest_rate }}</td>
-                        <td>{{ deposit.duration_months }}</td>
-                        <td>{{ deposit.start_date }}</td>
-                        <td>
-                            <form action="{{ url_for('close_deposit', deposit_id=deposit.id) }}" method="post">
-                                <button type="submit" class="btn btn-primary">Закрыть депозит</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+            <div id="profile-overview" class="content-section active">
+                <h2>{{ user.email }}</h2>
+                <div class="mt-4">
+                    <a href="{{ url_for('deposit') }}" class="btn btn-primary me-2">Добавить депозит</a>
+                    <a href="{{ url_for('add_family_deposit') }}" class="btn btn-primary">Добавить семейный вклад</a>
+                </div>
+            </div>
 
-        <div class="table-container">
-            <h3>Закрытые вклады</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Количество</th>
-                        <th>Процентная ставка</th>
-                        <th>Продолжительность (месяцы)</th>
-                        <th>Начало ставки</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for closed_deposit in closed_deposits %}
-                    <tr>
-                        <td>{{ closed_deposit.amount }}</td>
-                        <td>{{ closed_deposit.interest_rate }}</td>
-                        <td>{{ closed_deposit.duration_months }}</td>
-                        <td>{{ closed_deposit.start_date }}</td>
-                        <td>
-                            <form action="{{ url_for('delete_closed_deposit', deposit_id=closed_deposit.id) }}" method="post">
-                                <button type="submit" class="btn btn-danger">Удалить</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="table-container">
-            <h3>Семейные вклады</h3>
-            {% for family_deposit in family_deposits %}
-                <h4>Участник: {{ family_deposit.member.email }}</h4>
-                <form action="{{ url_for('delete_family_deposit', family_deposit_id=family_deposit.id) }}" method="post">
-                    <button type="submit" class="btn btn-danger">Удалить семейный вклад</button>
-                </form>
-                <table class="table">
+            <div id="deposits" class="content-section">
+                <h3>Вклады</h3>
+                <table class="table table-striped">
                     <thead>
                         <tr>
+                            <th>Количество</th>
+                            <th>Процентная ставка</th>
+                            <th>Продолжительность (месяцы)</th>
+                            <th>Начало ставки</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deposit in deposits %}
+                        <tr>
+                            <td>{{ deposit.amount }}</td>
+                            <td>{{ deposit.interest_rate }}</td>
+                            <td>{{ deposit.duration_months }}</td>
+                            <td>{{ deposit.start_date }}</td>
+                            <td>
+                                <form action="{{ url_for('close_deposit', deposit_id=deposit.id) }}" method="post">
+                                    <button type="submit" class="btn btn-danger btn-sm delete-btn">Удалить</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="closed-deposits" class="content-section">
+                <h3>Закрытые вклады</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Количество</th>
+                            <th>Процентная ставка</th>
+                            <th>Продолжительность (месяцы)</th>
+                            <th>Начало ставки</th>
+                            <th>Конец ставки</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for deposit in closed_deposits %}
+                        <tr>
+                            <td>{{ deposit.amount }}</td>
+                            <td>{{ deposit.interest_rate }}</td>
+                            <td>{{ deposit.duration_months }}</td>
+                            <td>{{ deposit.start_date }}</td>
+                            <td>{{ deposit.end_date }}</td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm delete-closed-deposit-btn" data-id="{{ deposit.id }}">Удалить</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+
+            <div id="family-deposits" class="content-section">
+                <h3>Семейные вклады</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Имя члена семьи</th>
                             <th>Количество</th>
                             <th>Процентная ставка</th>
                             <th>Продолжительность (месяцы)</th>
@@ -93,44 +278,40 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for deposit in family_deposit.deposits %}
-                        <tr>
-                            <td>{{ deposit.amount }}</td>
-                            <td>{{ deposit.interest_rate }}</td>
-                            <td>{{ deposit.duration_months }}</td>
-                            <td>{{ deposit.start_date }}</td>
-                        </tr>
+                        {% for family_deposit in family_deposits_data %}
+                            {% for deposit in family_deposit.deposits %}
+                            <tr>
+                                <td>{{ family_deposit.member.email }}</td>
+                                <td>{{ deposit.amount }}</td>
+                                <td>{{ deposit.interest_rate }}</td>
+                                <td>{{ deposit.duration_months }}</td>
+                                <td>{{ deposit.start_date }}</td>
+                            </tr>
+                            {% endfor %}
                         {% endfor %}
                     </tbody>
                 </table>
-            {% endfor %}
-        </div>
+            </div>
 
-       <div class="table-container">
-            <h3>Налоговая информация</h3>
-            <table class="table">
-                <tbody>
-                    <tr>
-                        <th>Текущая налоговая ставка</th>
-                        <td>{{ tax_rate }}</td>
-                    </tr>
-                    <tr>
-                        <th>Расчетный налог</th>
-                        <td>{{ tax }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="action-buttons">
-            <a href="{{ url_for('deposit') }}" class="btn btn-primary">Добавить депозит</a>
-            <a href="{{ url_for('add_family_deposit') }}" class="btn btn-primary">Добавить семейный вклад</a>
-        </div>
-
-        <div class="footer">
-            <p>&copy; 2024 ООО Биг болт</p>
-        </div>
-
+            <div id="tax-info" class="content-section">
+                <h3>Налоговая информация</h3>
+                <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <th>Текущая налоговая ставка</th>
+                            <td>{{ tax_rate }}</td>
+                        </tr>
+                        <tr>
+                            <th>Расчетный налог</th>
+                            <td>{{ tax }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
     </div>
+    <footer>
+        <p>&copy; 2024 Ваш сайт. Все права защищены.</p>
+    </footer>
 </body>
 </html>
