@@ -45,7 +45,7 @@ def create_app():
         form = LoginForm()
         return render_template('index.html', form=form)
 
-    @app.route('/login', methods=['POST'])
+    @app.route('/', methods=['POST'])
     def login():
         form = LoginForm()
         if form.validate_on_submit():
@@ -76,8 +76,7 @@ def create_app():
             try:
                 db.session.commit()
                 flash('Регистрация успешна!', 'success')
-                return redirect(url_for('index'))
-            except :
+            except:
                 db.session.rollback()
                 flash('Ошибка при регистрации, попробуйте снова.', 'danger')
 

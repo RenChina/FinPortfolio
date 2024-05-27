@@ -12,6 +12,13 @@ body {
 .border{
     background-color: #373737;
 }
+
+.fading-hr {
+    border: 0;
+    height: 3px; /* Высота линии */
+    background: linear-gradient(to right, rgba(87, 87, 87, 0), #dadada, rgba(85, 85, 85, 0));
+}
+
 .container {
     width: 90%;
     max-width: 1200px;
@@ -21,6 +28,10 @@ body {
     padding: 20px;
     margin: 20px;
     color: #ffffff;
+}
+
+.text-body-small{
+    color: #bdbdbd;
 }
 
 .header {

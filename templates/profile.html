@@ -38,7 +38,6 @@
             background-color: #2c2c2c; /* Темный цвет фона для контента */
             padding: 20px;
             border-radius: 10px;
-            box-shadow: -13px 13px 10px rgb(39 39 39);
             margin: 20px;
         }
         .content-section.active {
@@ -50,6 +49,7 @@
         .table th, .table td {
             vertical-align: middle;
             background-color: #424242; /* Темный цвет фона для ячеек таблицы */
+            color: #BDBDBDFF;
         }
         .btn-primary {
             background-color: #ffc107;
@@ -197,15 +197,16 @@
             </div>
 
             <div id="profile-overview" class="content-section active">
-                <h2>{{ user.email }}</h2>
-                <div class="mt-4">
-                    <a href="{{ url_for('deposit') }}" class="btn btn-primary me-2">Добавить депозит</a>
-                    <a href="{{ url_for('add_family_deposit') }}" class="btn btn-primary">Добавить семейный вклад</a>
-                </div>
+                <h2> Это вы - {{ user.email }}</h2>
+
             </div>
 
             <div id="deposits" class="content-section">
+
                 <h3>Вклады</h3>
+                 <div class="mt-4">
+                    <a href="{{ url_for('deposit') }}" class="btn btn-primary me-2">Добавить депозит</a>
+                 </div>
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -267,6 +268,9 @@
 
             <div id="family-deposits" class="content-section">
                 <h3>Семейные вклады</h3>
+                <div class="mt-4">
+                    <a href="{{ url_for('add_family_deposit') }}" class="btn btn-primary">Добавить семейный вклад</a>
+                </div>
                 <table class="table table-striped">
                     <thead>
                         <tr>
