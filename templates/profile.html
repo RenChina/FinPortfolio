@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Личный профиль</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -74,7 +78,9 @@
             color: #cccccc;
         }
     </style>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
     $(document).ready(function() {
         // Обработчик событий для кнопок удаления закрытых вкладов
@@ -159,7 +165,43 @@
         });
     });
 </script>
+<script>
+        $(document).ready(function() {
+            // Обработчик событий для кнопок удаления семейных вкладов
+            $('body').on('click', '.delete-family-deposit-btn', function() {
+                const familyDepositId = $(this).data('id');
+                $.ajax({
+                    type: 'POST',
+                    url: `/delete_family_deposit/${familyDepositId}`,
+                    success: function(response) {
+                        if (response.success) {
+                            refreshSection('family_deposits');
+                        } else {
+                            alert('Ошибка при удалении семейного вклада');
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            });
 
+            function refreshSection(section) {
+                $.ajax({
+                    url: `/profile/{{ user.id }}?section=${section}`,
+                    type: 'GET',
+                    success: function(response) {
+                        $(`#${section}`).html($(response).find(`#${section}`).html());
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            }
+
+            // Remaining JavaScript initialization remains unchanged
+        });
+    </script>
 
 </head>
 <body>
@@ -279,6 +321,7 @@
                             <th>Процентная ставка</th>
                             <th>Продолжительность (месяцы)</th>
                             <th>Начало ставки</th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -290,6 +333,9 @@
                                 <td>{{ deposit.interest_rate }}</td>
                                 <td>{{ deposit.duration_months }}</td>
                                 <td>{{ deposit.start_date }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm delete-family-deposit-btn" data-id="{{ family_deposit.id }}">Удалить</button>
+                                </td>
                             </tr>
                             {% endfor %}
                         {% endfor %}
