@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, session, request
+from flask import Flask, render_template, redirect, url_for, flash, session, request, jsonify
 from extensions import db, migrate
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DecimalField, IntegerField, DateField
@@ -93,7 +93,7 @@ def create_app():
         closed_deposits = ClosedDeposit.query.filter_by(user_id=user.id).all()
         family_deposits = FamilyDeposit.query.filter_by(owner_id=user.id).all()
 
-        tax_rate = 0.13
+        tax_rate = 0.13  # Этот значение теперь будет преобразовано в Decimal в функции calculate_tax
         tax = calculate_tax(deposits, tax_rate)
 
         family_deposits_data = []
@@ -186,12 +186,10 @@ def create_app():
     def delete_family_deposit(family_deposit_id):
         family_deposit = FamilyDeposit.query.get_or_404(family_deposit_id)
         if family_deposit.owner_id != session.get('user_id'):
-            flash('Нет доступа к этому семейному вкладу', 'danger')
-            return redirect(url_for('profile', user_id=session['user_id']))
+            return jsonify({'error': 'Нет доступа к этому семейному вкладу'}), 403
         db.session.delete(family_deposit)
         db.session.commit()
-        flash('Семейный вклад удален', 'success')
-        return redirect(url_for('profile', user_id=session['user_id']))
+        return jsonify({'success': True}), 200
 
     @app.route('/logout')
     def logout():
@@ -199,13 +197,19 @@ def create_app():
         flash('Вы вышли из профиля', 'success')
         return redirect(url_for('index'))
 
+    from decimal import Decimal
+    from dateutil.relativedelta import relativedelta
+
     def calculate_tax(deposits, tax_rate):
-        total_tax = 0
+        total_tax = Decimal(0)
+        proverka_na_nalog = Decimal(15000)
+        tax_rate = Decimal(tax_rate)  # Преобразуем tax_rate в Decimal
+
         for deposit in deposits:
-            end_date = deposit.start_date + relativedelta(months=+deposit.duration_months)
-            if end_date.year == date.today().year:
-                interest = (deposit.amount * deposit.interest_rate * (Decimal(deposit.duration_months) * Decimal('30.44'))) / Decimal('100')
-                total_tax += interest * Decimal(tax_rate)
+            total_value = (deposit.amount * deposit.interest_rate / Decimal(12) * deposit.duration_months)
+            if total_value > proverka_na_nalog:
+                total_tax += total_value * tax_rate
+
         return total_tax
 
     return app
