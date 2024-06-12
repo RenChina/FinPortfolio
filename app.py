@@ -200,10 +200,10 @@ def create_app():
 
     def calculate_tax(deposits, tax_rate):
         total_tax = Decimal(0)
-        proverka_na_nalog = Decimal(150000)
         tax_rate = Decimal(tax_rate)  # Преобразуем tax_rate в Decimal
 
         for deposit in deposits:
+            proverka_na_nalog = deposit.amount * Decimal(0.15)
             total_value = deposit.amount * (((deposit.interest_rate / 100) / Decimal(12))) * deposit.duration_months
             if total_value > proverka_na_nalog:
                 total_tax += (total_value - proverka_na_nalog) * tax_rate
