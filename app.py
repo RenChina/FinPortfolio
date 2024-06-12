@@ -6,8 +6,6 @@ from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, Deposit, FamilyDeposit, ClosedDeposit
 from decimal import Decimal
-
-
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'your_secret_key'
@@ -211,7 +209,6 @@ def create_app():
         return total_tax
 
     return app
-
 
 if __name__ == '__main__':
     app = create_app()
