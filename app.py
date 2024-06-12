@@ -4,10 +4,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, DecimalField, IntegerField, DateField
 from wtforms.validators import DataRequired, Email, Length
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, Portfolio, Deposit, FamilyDeposit, ClosedDeposit
+from models import User, Deposit, FamilyDeposit, ClosedDeposit
 from decimal import Decimal
-from datetime import date
-from dateutil.relativedelta import relativedelta
 
 
 def create_app():
@@ -50,12 +48,15 @@ def create_app():
         form = LoginForm()
         if form.validate_on_submit():
             user = User.query.filter_by(email=form.email.data).first()
-            if user and check_password_hash(user.password, form.password.data):
+            if user is None:
+                flash('Пользователь не найден.', 'danger')
+            elif check_password_hash(user.password, form.password.data):
                 session['user_id'] = user.id
                 flash('Успешно зарегистрировались', 'success')
                 return redirect(url_for('profile', user_id=user.id))
             else:
                 flash('Неправильная почта или пароль.', 'danger')
+
         return render_template('index.html', form=form)
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -114,16 +115,6 @@ def create_app():
                                tax_rate=tax_rate,
                                tax=tax)
 
-    @app.route('/delete_closed_deposit/<int:deposit_id>', methods=['POST'])
-    def delete_closed_deposit(deposit_id):
-        closed_deposit = ClosedDeposit.query.get_or_404(deposit_id)
-        if closed_deposit.user_id != session.get('user_id'):
-            return {'error': 'Нет доступа к вкладу'}, 403
-
-        db.session.delete(closed_deposit)
-        db.session.commit()
-        return {'success': True}, 200
-
     @app.route('/deposit', methods=['GET', 'POST'])
     def deposit():
         form = DepositForm()
@@ -164,6 +155,16 @@ def create_app():
         flash('Депозит закрыт', 'success')
         return redirect(url_for('profile', user_id=session['user_id']))
 
+    @app.route('/delete_closed_deposit/<int:deposit_id>', methods=['POST'])
+    def delete_closed_deposit(deposit_id):
+        closed_deposit = ClosedDeposit.query.get_or_404(deposit_id)
+        if closed_deposit.user_id != session.get('user_id'):
+            return {'error': 'Нет доступа к вкладу'}, 403
+
+        db.session.delete(closed_deposit)
+        db.session.commit()
+        return {'success': True}, 200
+
     @app.route('/add_family_deposit', methods=['GET', 'POST'])
     def add_family_deposit():
         form = FamilyDepositForm()
@@ -197,18 +198,15 @@ def create_app():
         flash('Вы вышли из профиля', 'success')
         return redirect(url_for('index'))
 
-    from decimal import Decimal
-    from dateutil.relativedelta import relativedelta
-
     def calculate_tax(deposits, tax_rate):
         total_tax = Decimal(0)
-        proverka_na_nalog = Decimal(15000)
+        proverka_na_nalog = Decimal(150000)
         tax_rate = Decimal(tax_rate)  # Преобразуем tax_rate в Decimal
 
         for deposit in deposits:
-            total_value = (deposit.amount * deposit.interest_rate / Decimal(12) * deposit.duration_months)
+            total_value = deposit.amount * (((deposit.interest_rate / 100) / Decimal(12))) * deposit.duration_months
             if total_value > proverka_na_nalog:
-                total_tax += total_value * tax_rate
+                total_tax += (total_value - proverka_na_nalog) * tax_rate
 
         return total_tax
 

@@ -87,6 +87,13 @@
 </head>
 <body>
     <div class="container-for-table">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
         <h1>Добавление депозита</h1>
         <form method="POST" action="{{ url_for('deposit') }}">
             {{ form.hidden_tag() }}
