@@ -52,7 +52,32 @@
         border: none;
         color: #212121;
       }
+    .flash {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
 
+    .flash.success {
+      background-color: #4caf50;
+      color: #ffffff;
+    }
+
+    .flash.error {
+      background-color: #f44336;
+      color: #ffffff;
+    }
+
+    .flash.hidden {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
       .btn-primary:hover {
         background-color: #ffca28;
       }
@@ -81,10 +106,26 @@
         }
       }
     </style>
-
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(function(message) {
+          message.classList.add('hidden');
+        });
+      }, 3000); // Уведомление пропадет через 3 секунды
+    });
+  </script>
   </head>
   <body>
     <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
       <div class="row align-items-center g-lg-5 py-5">
         <div class="col-lg-7 text-center text-lg-start">
           <h1 class="display-4 fw-bold lh-1 mb-3">Добро пожаловать на наш сайт!</h1>

@@ -81,101 +81,36 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<script>
-    $(document).ready(function() {
-        // Обработчик событий для кнопок удаления закрытых вкладов
-        $('body').on('click', '.delete-closed-deposit-btn', function() {
-            const depositId = $(this).data('id');
-            $.ajax({
-                type: 'POST',
-                url: `/delete_closed_deposit/${depositId}`,
-                success: function(response) {
-                    if (response.success) {
-                        refreshSection('closed_deposits');
-                    } else {
-                        alert('Ошибка при удалении вклада');
-                    }
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        });
-
-        // Обработчик событий для кнопок удаления семейных вкладов
-        $('body').on('click', '.delete-family-deposit-btn', function() {
-            const depositId = $(this).data('id');
-            $.ajax({
-                type: 'POST',
-                url: `/delete_family_deposit/${depositId}`,
-                success: function(response) {
-                    if (response.success) {
-                        refreshSection('family_deposits');
-                    } else {
-                        alert('Ошибка при удалении семейного вклада');
-                    }
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        });
-
-        function refreshSection(section) {
-            $.ajax({
-                url: `/profile/{{ user.id }}?section=${section}`,
-                type: 'GET',
-                success: function(response) {
-                    $(`#${section}`).html($(response).find(`#${section}`).html());
-                },
-                error: function(error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
-
-        let links = document.querySelectorAll('.nav-link');
-        let sections = document.querySelectorAll('.content-section');
-
-        links.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                sections.forEach(section => section.classList.remove('active'));
-                links.forEach(link => link.classList.remove('active'));
-                document.querySelector(link.getAttribute('href')).classList.add('active');
-                link.classList.add('active');
-                history.pushState(null, '', link.getAttribute('href'));
-            });
-        });
-
-        window.addEventListener('popstate', function() {
-            const activeSection = location.hash || '#profile-overview';
-            links.forEach(link => {
-                if (link.getAttribute('href') === activeSection) {
-                    link.click();
-                }
-            });
-        });
-
-        const activeSection = location.hash || '#profile-overview';
-        links.forEach(link => {
-            if (link.getAttribute('href') === activeSection) {
-                link.click();
-            }
-        });
-    });
-</script>
-<script>
+    <script>
         $(document).ready(function() {
-            // Обработчик событий для кнопок удаления семейных вкладов
-            $('body').on('click', '.delete-family-deposit-btn', function() {
-                const familyDepositId = $(this).data('id');
+            // Обработчик событий для кнопок удаления закрытых вкладов
+            $('body').on('click', '.delete-closed-deposit-btn', function() {
+                const depositId = $(this).data('id');
                 $.ajax({
                     type: 'POST',
-                    url: `/delete_family_deposit/${familyDepositId}`,
+                    url: `/delete_closed_deposit/${depositId}`,
                     success: function(response) {
                         if (response.success) {
-                            refreshSection('family_deposits');
+                            location.reload(); // Перезагрузка страницы
+                        } else {
+                            alert('Ошибка при удалении вклада');
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error:', error);
+                    }
+                });
+            });
+
+            // Обработчик событий для кнопок удаления семейных вкладов
+            $('body').on('click', '.delete-family-deposit-btn', function() {
+                const depositId = $(this).data('id');
+                $.ajax({
+                    type: 'POST',
+                    url: `/delete_family_deposit/${depositId}`,
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload(); // Перезагрузка страницы
                         } else {
                             alert('Ошибка при удалении семейного вклада');
                         }
@@ -186,25 +121,41 @@
                 });
             });
 
-            function refreshSection(section) {
-                $.ajax({
-                    url: `/profile/{{ user.id }}?section=${section}`,
-                    type: 'GET',
-                    success: function(response) {
-                        $(`#${section}`).html($(response).find(`#${section}`).html());
-                    },
-                    error: function(error) {
-                        console.error('Error:', error);
+            let links = document.querySelectorAll('.nav-link');
+            let sections = document.querySelectorAll('.content-section');
+
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    sections.forEach(section => section.classList.remove('active'));
+                    links.forEach(link => link.classList.remove('active'));
+                    document.querySelector(link.getAttribute('href')).classList.add('active');
+                    link.classList.add('active');
+                    history.pushState(null, '', link.getAttribute('href'));
+                });
+            });
+
+            window.addEventListener('popstate', function() {
+                const activeSection = location.hash || '#profile-overview';
+                links.forEach(link => {
+                    if (link.getAttribute('href') === activeSection) {
+                        link.click();
                     }
                 });
-            }
+            });
 
-            // Remaining JavaScript initialization remains unchanged
+            const activeSection = location.hash || '#profile-overview';
+            links.forEach(link => {
+                if (link.getAttribute('href') === activeSection) {
+                    link.click();
+                }
+            });
         });
     </script>
 
 </head>
 <body>
+
     <div class="container-fluid">
         <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar">
             <div class="position-sticky">
@@ -298,6 +249,7 @@
                             <td>{{ deposit.duration_months }}</td>
                             <td>{{ deposit.start_date }}</td>
                             <td>{{ deposit.end_date }}</td>
+
                             <td>
                                 <button type="button" class="btn btn-danger btn-sm delete-closed-deposit-btn" data-id="{{ deposit.id }}">Удалить</button>
                             </td>
